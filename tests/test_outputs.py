@@ -43,6 +43,7 @@ def db_conn():
 
 
 def test_repaired_graph_exists():
+    """Repaired GraphML must be written to /app/output/repaired.graphml with expected service content."""
     assert OUTPUT_GRAPH.exists(), "repaired.graphml was not created"
     content = OUTPUT_GRAPH.read_text(encoding="utf-8")
     assert "<graphml" in content
@@ -51,16 +52,19 @@ def test_repaired_graph_exists():
 
 
 def test_report_matches_schema(report, report_schema):
+    """Recovery report JSON must validate against /app/schema/report.schema.json."""
     jsonschema.validate(instance=report, schema=report_schema)
 
 
 def test_report_status(report):
+    """Report must record successful XSD validation against the live GraphML schema URL."""
     assert report["status"] in {"success", "partial"}
     assert report["xsd_validation"]["passed"] is True
     assert "graphml.graphdrawing.org" in report["xsd_validation"]["schema_url"]
 
 
 def test_report_repairs(report):
+    """Report must document all four corruption repair categories applied to the fixtures."""
     actions = {entry["action"] for entry in report["repairs"]}
     assert "merge_fragments" in actions
     assert "inject_keys" in actions
@@ -69,6 +73,7 @@ def test_report_repairs(report):
 
 
 def test_report_counts(report):
+    """Report verification and database counts must match the expected verified and rejected fixtures."""
     assert report["verification"]["nodes_verified"] == 3
     assert report["verification"]["edges_verified"] == 3
     assert report["database"]["nodes_loaded"] == 3
@@ -78,6 +83,7 @@ def test_report_counts(report):
 
 
 def test_services_table(db_conn):
+    """PostgreSQL services table must contain exactly the three verified, non-revoked services."""
     with db_conn.cursor() as cur:
         cur.execute("SELECT service_id FROM services ORDER BY service_id")
         rows = {row[0] for row in cur.fetchall()}
@@ -86,6 +92,7 @@ def test_services_table(db_conn):
 
 
 def test_trust_edges_table(db_conn):
+    """PostgreSQL trust_edges table must contain exactly the three verified edges and exclude revoked edge e3."""
     with db_conn.cursor() as cur:
         cur.execute("SELECT edge_id FROM trust_edges ORDER BY edge_id")
         rows = {row[0] for row in cur.fetchall()}
@@ -94,5 +101,6 @@ def test_trust_edges_table(db_conn):
 
 
 def test_edge_signature_reattached():
+    """Repaired GraphML must reattach detached Ed25519 signatures as d_sig data elements on edges."""
     content = OUTPUT_GRAPH.read_text(encoding="utf-8")
     assert 'key="d_sig"' in content

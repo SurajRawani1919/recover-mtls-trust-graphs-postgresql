@@ -30,15 +30,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN update-ca-certificates
 
+COPY app/api/requirements.txt /tmp/api-requirements.txt
+COPY test-requirements.txt /tmp/test-requirements.txt
+
+RUN pip3 install --no-cache-dir --break-system-packages \
+    -r /tmp/api-requirements.txt \
+    -r /tmp/test-requirements.txt
+
 WORKDIR /app
 
 COPY app/ /app/
-
-RUN pip3 install --no-cache-dir --break-system-packages \
-    -r /app/api/requirements.txt \
-    pytest==8.3.4 \
-    jsonschema==4.23.0 \
-    psycopg2-binary==2.9.10
 
 RUN python3 /app/scripts/gen_fixtures.py
 
