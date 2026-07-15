@@ -1,0 +1,13 @@
+.git
+.gitignore
+solution/
+tests/
+README.md
+PROJECT_PLAN.md
+instruction.md
+task.toml
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+app/output/*
+!app/output/.gitkeep
