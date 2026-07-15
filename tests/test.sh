@@ -5,7 +5,7 @@ cd /app
 mkdir -p /logs/verifier
 
 set +e
-pytest -rA -q /tests/test_outputs.py
+pytest -rA /tests/test_outputs.py
 rc=$?
 set -e
 
