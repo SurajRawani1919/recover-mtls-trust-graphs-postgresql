@@ -2,15 +2,15 @@
 set -euo pipefail
 
 cd /app
-
 mkdir -p /logs/verifier
 
-python3 -m pip install --quiet --break-system-packages pytest jsonschema psycopg2-binary 2>/dev/null || \
-  pip3 install --quiet --break-system-packages pytest jsonschema psycopg2-binary
+set +e
+pytest -rA -q /tests/test_outputs.py
+rc=$?
+set -e
 
-if pytest -q /tests/test_outputs.py; then
-  echo "1" > /logs/verifier/reward.txt
+if [ "$rc" -eq 0 ]; then
+  echo 1 > /logs/verifier/reward.txt
 else
-  echo "0" > /logs/verifier/reward.txt
-  exit 1
+  echo 0 > /logs/verifier/reward.txt
 fi

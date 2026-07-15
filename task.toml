@@ -2,39 +2,48 @@ schema_version = "1.3"
 
 [task]
 name = "snorkel/recover-mtls-trust-graphs-postgresql"
-description = "Repair corrupted mTLS GraphML trust graphs, verify via Flask API, and bulk-load verified records into PostgreSQL with a C++ libpq COPY pipeline."
-authors = [{ name = "Snorkel Terminus", email = "tasks@snorkel.ai" }]
+description = "Build a fail-closed C++ mTLS trust-graph recovery pipeline: repair corrupted GraphML, validate Ed25519 edge signatures and certificate revocation via a Flask verifier API, and persist only cryptographically verified service trust relationships to PostgreSQL."
+authors = [{ name = "Suraj Rawani", email = "SurajRawani1919@users.noreply.github.com" }]
 keywords = [
-  "cpp",
-  "postgresql",
-  "libpq",
-  "graphml",
   "mtls",
-  "ed25519",
-  "flask",
   "security",
+  "cryptography",
+  "ed25519",
+  "certificate-revocation",
+  "trust-graph",
+  "cpp",
+  "flask",
   "api-integration",
-  "pytest",
+  "libpq",
 ]
 
 [metadata]
+author_name = "Suraj Rawani"
+author_email = "SurajRawani1919@users.noreply.github.com"
 difficulty = "hard"
 difficulty_explanation = "Requires C++ XML repair, live XSD fetch/validation, HTTP verifier integration, and libpq COPY ingest with cryptographic edge cases."
 category = "security"
 domain = "Security & Cryptography"
 subtypes = ["API Integration", "Tool Specific"]
-tags = ["cryptography", "xml", "database", "docker"]
+subcategories = ["API Integration", "Tool Specific"]
+tags = ["cryptography", "mtls", "ed25519", "xml", "security", "docker"]
+codebase_size = "medium"
+number_of_milestones = 0
+languages = ["cpp", "python", "sql"]
+expert_time_estimate_min = 180
+junior_time_estimate_min = 480
 
 [verifier]
 timeout_sec = 900.0
 
 [agent]
-timeout_sec = 3600.0
+timeout_sec = 1800.0
 
 [solution]
 timeout_sec = 1800.0
 
 [environment]
+allow_internet = true
 network_mode = "public"
 build_timeout_sec = 1200.0
 cpus = 2

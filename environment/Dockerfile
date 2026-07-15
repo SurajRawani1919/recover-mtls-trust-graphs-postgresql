@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PGDATA=/var/lib/postgresql/data
@@ -35,7 +35,10 @@ WORKDIR /app
 COPY app/ /app/
 
 RUN pip3 install --no-cache-dir --break-system-packages \
-    -r /app/api/requirements.txt
+    -r /app/api/requirements.txt \
+    pytest==8.3.4 \
+    jsonschema==4.23.0 \
+    psycopg2-binary==2.9.10
 
 RUN python3 /app/scripts/gen_fixtures.py
 

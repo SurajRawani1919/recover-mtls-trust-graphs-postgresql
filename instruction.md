@@ -1,145 +1,44 @@
-# Recover mTLS Trust Graphs into PostgreSQL with C++
+# Recover mTLS Trust Graphs: Cryptographic Trust Policy Recovery
 
-Operations exported an mTLS service-trust graph as GraphML, but the archive is corrupted. Build a **C++ recovery pipeline** that repairs the artifact, validates it against the live GraphML XSD, verifies trust material through the bundled Flask verifier API, and loads only verified records into PostgreSQL with **`libpq` `COPY`**.
+Security operations exported an **mTLS service-trust authorization graph** as GraphML. The archive is **cryptographically corrupted** and must not be used for access-control decisions until you implement a **fail-closed C++ recovery pipeline** that repairs the graph, validates **Ed25519** edge signatures, checks **certificate revocation**, verifies trust material through the bundled Flask API, and persists **only cryptographically verified** service trust relationships to PostgreSQL via **`libpq` `COPY`**.
 
-## What you are given
+## Environment
 
-- Corrupted graph fragments under `/app/graph/`
-- Detached edge signatures at `/app/graph/detached_signatures.json`
-- Flask verifier API source in `/app/api/` (start it on port **5001**)
-- PostgreSQL bootstrap DDL at `/app/database/schema.sql`
-- Certificate and revocation fixtures under `/app/certificates/`
-- Pipeline stubs under `/app/pipeline/`
-- Helper scripts under `/app/scripts/`
-- Report JSON schema at `/app/schema/report.schema.json`
+Corrupted graph fragments live under `/app/graph/`. Detached edge signatures are in `/app/graph/detached_signatures.json`. The Flask verifier API is in `/app/api/` (port **5001**). PostgreSQL DDL is at `/app/database/schema.sql`. Certificate fixtures are under `/app/certificates/`. Pipeline stubs are under `/app/pipeline/`. Helper scripts are under `/app/scripts/`. The report JSON schema is at `/app/schema/report.schema.json`.
 
-The official GraphML XSD is **not** vendored. Your pipeline must download it at runtime from:
+Fetch the live GraphML XSD at runtime from `http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd` (use HTTP; HTTPS has a hostname mismatch on that host).
 
-`http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd`
+## Corruption to repair
 
-Note: this host serves a valid XSD over HTTP; its HTTPS certificate does not match the hostname.
+Merge split fragments (`head.graphml` + `tail.graphml`) into one GraphML document. Inject missing `<key>` declarations **before** `<graph>`. Deduplicate nodes by `service_id`: keep the higher `version`; on tie, keep the later document-order node. Reattach detached Ed25519 signatures from `detached_signatures.json` onto matching edges as `<data key="d_sig">`.
 
-## Corruption you must repair
+| Key id | Scope | Attribute | Meaning |
+|--------|-------|-----------|---------|
+| `d_svc` | node | `service_id` | Stable service identifier |
+| `d_label` | node | `label` | Human-readable name |
+| `d_serial` | node | `cert_serial` | Certificate serial for revocation checks |
+| `d_version` | node | `version` | Duplicate resolution |
+| `d_policy` | edge | `policy` | Authorization policy string |
+| `d_sig` | edge | `signature` | Base64 Ed25519 signature |
 
-1. **Split XML records** — the graph is split across `/app/graph/fragments/head.graphml` and `/app/graph/fragments/tail.graphml`. Merge them into one document.
-2. **Missing key declarations** — `<data key="...">` elements reference keys that are not declared in `<key>` elements. Infer and inject the required `<key>` declarations.
-3. **Duplicate service nodes** — the same `service_id` appears more than once. Deduplicate deterministically: keep the node with the **higher `version` attribute**; if versions tie, keep the node that appears **later** in document order.
-4. **Detached Ed25519 signatures** — authorization edge signatures are stored in `detached_signatures.json` instead of on the edge. Reattach each signature to the matching edge `id` in a `<data key="d_sig">` element.
+## Verifier API
 
-## GraphML data model
+Start services with `/app/scripts/start_services.sh`, then call these JSON endpoints on port **5001**:
 
-Nodes (`<node>`) carry:
+| Endpoint | Method | Request | Response |
+|----------|--------|---------|----------|
+| `/health` | GET | — | `{"status":"ok"}` |
+| `/verify/key` | POST | `{"cert_serial":"AUTH-0001"}` | `{"valid":true,"issuer_key_id":"platform-issuer-v1"}` or `"valid":false` |
+| `/verify/revocation` | POST | `{"cert_serial":"LEGACY-0099"}` | `{"revoked":true}` or `{"revoked":false}` |
+| `/verify/edge` | POST | `{"source":"svc-auth-01","target":"svc-pay-02","policy":"allow:read","signature":"<base64>"}` | `{"valid":true}` or `{"valid":false}` |
 
-| Key id | Attribute | Meaning |
-|--------|-----------|---------|
-| `d_svc` | `service_id` | Stable service identifier |
-| `d_label` | `label` | Human-readable name |
-| `d_serial` | `cert_serial` | Certificate serial used for revocation checks |
-| `d_version` | `version` | Integer used for duplicate resolution |
-
-Edges (`<edge>`) carry:
-
-| Key id | Attribute | Meaning |
-|--------|-----------|---------|
-| `d_policy` | `policy` | Authorization policy string |
-| `d_sig` | `signature` | Base64 Ed25519 signature (reattach from sidecar) |
-
-## Verification API
-
-Start the verifier before running your pipeline:
-
-```bash
-/app/scripts/start_services.sh
-```
-
-Endpoints (JSON bodies, JSON responses):
-
-### `GET /health`
-
-Returns `{"status":"ok"}` when ready.
-
-### `POST /verify/key`
-
-Request:
-
-```json
-{ "cert_serial": "AUTH-0001" }
-```
-
-Response:
-
-```json
-{ "valid": true, "issuer_key_id": "platform-issuer-v1" }
-```
-
-Unknown serials return `"valid": false`.
-
-### `POST /verify/revocation`
-
-Request:
-
-```json
-{ "cert_serial": "LEGACY-0099" }
-```
-
-Response:
-
-```json
-{ "revoked": true }
-```
-
-Active certificates return `"revoked": false`.
-
-### `POST /verify/edge`
-
-Canonical signed payload (UTF-8, no trailing newline):
-
-```
-{source_service_id}|{target_service_id}|{policy}
-```
-
-Request:
-
-```json
-{
-  "source": "svc-auth-01",
-  "target": "svc-pay-02",
-  "policy": "allow:read",
-  "signature": "<base64>"
-}
-```
-
-Response:
-
-```json
-{ "valid": true }
-```
+Edge canonical signed payload (UTF-8, no trailing newline): `{source_service_id}|{target_service_id}|{policy}`.
 
 ## Pipeline requirements
 
-Implement the recovery binary at `/app/pipeline/` and install it as `/app/bin/recover_graph`.
+Implement `/app/bin/recover_graph` from `/app/pipeline/`. The pipeline must merge and repair the graph; write `/app/output/repaired.graphml`; fetch and pass XSD validation; for each node call `/verify/key` and `/verify/revocation` (only non-revoked nodes with valid keys are verified); for each edge call `/verify/edge` (ingest only when signature is valid and both endpoints are verified nodes); bulk-load verified rows with **`PQexec` + `COPY ... FROM STDIN`** into `services(service_id, label, cert_serial, issuer_key_id)` and `trust_edges(edge_id, source_service_id, target_service_id, policy, signature)`; write `/app/output/report.json` conforming to `/app/schema/report.schema.json`.
 
-Your pipeline must:
-
-1. Merge fragments and apply all repairs listed above.
-2. Write repaired GraphML to `/app/output/repaired.graphml`.
-3. Fetch the live GraphML XSD and validate `repaired.graphml`. Record results in the report.
-4. For each node: call `/verify/key` and `/verify/revocation`. Only **non-revoked** nodes with `valid: true` key lookup are **verified nodes**.
-5. For each edge: call `/verify/edge`. Only ingest edges where:
-   - signature verification returns `valid: true`, **and**
-   - both endpoint service IDs are verified nodes.
-6. Bulk-load verified rows into PostgreSQL using **`PQexec` with `COPY ... FROM STDIN`** (not row-by-row `INSERT`).
-   - Table `services(service_id, label, cert_serial, issuer_key_id)`
-   - Table `trust_edges(edge_id, source_service_id, target_service_id, policy, signature)`
-7. Write `/app/output/report.json` conforming to `/app/schema/report.schema.json`.
-
-## Report semantics
-
-- `status` is `"success"` only if XSD validation passed, at least one verified node was loaded, and no hard I/O/DB failure occurred.
-- `status` is `"partial"` if XSD passed but some nodes/edges were rejected by verification.
-- `status` is `"failed"` if repair or XSD validation failed.
-- `repairs` must list each repair category applied at least once when that corruption was present.
-- `database.nodes_loaded` and `database.edges_loaded` must match actual `COPY` counts.
+Report `status` is `"success"` when XSD passed and at least one verified node loaded without hard failure; `"partial"` when XSD passed but verification rejected some records; `"failed"` when repair or XSD failed. List repair actions (`merge_fragments`, `inject_keys`, `deduplicate_nodes`, `reattach_signatures`) when applicable. Use **C++17**, do not vendor the XSD, do not insert unverified records, exit **0** on `success`/`partial` and non-zero on `failed`.
 
 ## Build and run
 
@@ -155,19 +54,6 @@ Your pipeline must:
   --database-url postgresql://mtls:mtls@127.0.0.1:5432/mtls_trust
 ```
 
-## Constraints
+## Expected verified outcome
 
-- Primary implementation language: **C++17** (libxml2, libcurl, libpq, libsodium or OpenSSL for local helpers if needed).
-- Do not vendor the GraphML XSD.
-- Do not insert unverified nodes or edges.
-- Use `COPY` for database ingest.
-- Exit code **0** on `success` or `partial`; **non-zero** on `failed`.
-
-## Expected verified outcome (sanity check)
-
-After a correct run against the bundled fixtures:
-
-- **3** services loaded (`svc-auth-01`, `svc-pay-02`, `svc-notify-03`)
-- **3** trust edges loaded (`e1`, `e2`, `e4`)
-- `svc-legacy-99` must **not** appear in `services`
-- Edge `e3` must **not** appear in `trust_edges` (revoked endpoint)
+A correct run loads **3** services (`svc-auth-01`, `svc-pay-02`, `svc-notify-03`) and **3** edges (`e1`, `e2`, `e4`). `svc-legacy-99` and edge `e3` must be rejected and absent from the database.
