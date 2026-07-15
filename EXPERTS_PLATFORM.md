@@ -41,13 +41,27 @@ You should see **Terminus-2nd-Edition** (not "No projects found").
 
 ## Step 2: Submit via CLI
 
+**Important:** CI expects `task.toml`, `environment/`, `tests/` at the **root of the zip** — not inside a `recover-mtls-trust-graphs-postgresql/` subfolder.
+
+### Option A — `stb` (recommended)
+
 ```bash
 cd /mnt/c/Users/rawan/OneDrive/Desktop/recover-mtls-trust-graphs-postgresql
 source scripts/load-stb-env.sh
 ./scripts/run-harness.sh submit Terminus-2nd-Edition 180
 ```
 
-This removes `jobs/` and `my-task-name/` before zipping (~107 KB, not 2.5 MB).
+Run from the **task folder itself** (`-p .`), not from a parent directory.
+
+### Option B — Manual zip upload
+
+```bash
+./scripts/run-harness.sh zip
+# Creates: recover-mtls-trust-graphs-postgresql-submission.zip
+# Upload on Experts platform — zip root must contain task.toml, not a nested folder
+```
+
+This removes `jobs/` and `my-task-name/` before zipping (~40 KB).
 
 On success you will see:
 

@@ -14,3 +14,7 @@ environment/app/bin/
 # Runtime outputs
 environment/app/output/*
 !environment/app/output/.gitkeep
+
+# Local submission archives
+*-submission.zip
+recover-mtls-trust-graphs-postgresql-submission.zip

@@ -10,7 +10,6 @@ from nacl.exceptions import BadSignatureError
 from nacl.signing import SigningKey, VerifyKey
 
 from config import (
-    EDGE_FIXTURES,
     ISSUER_KEY_ID,
     ISSUER_SEED,
     KNOWN_SERIALS,

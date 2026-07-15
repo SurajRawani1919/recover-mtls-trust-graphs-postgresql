@@ -39,6 +39,10 @@ pre_submit_cleanup() {
   echo "Removed jobs/ and my-task-name/ from submission folder."
 }
 
+create_submission_zip() {
+  python3 "$ROOT/scripts/create-submission-zip.py" "$ROOT/recover-mtls-trust-graphs-postgresql-submission.zip"
+}
+
 verify_environment() {
   echo "== Docker Compose =="
   docker compose version
@@ -99,8 +103,12 @@ case "$cmd" in
     pre_submit_cleanup
     stb submissions create . -p "$project" --time "$time_min"
     ;;
+  zip)
+    pre_submit_cleanup
+    create_submission_zip
+    ;;
   *)
-    echo "Usage: $0 {verify|oracle|gpt|claude|submit} [project-name] [time-minutes]" >&2
+    echo "Usage: $0 {verify|oracle|gpt|claude|submit|zip} [project-name] [time-minutes]" >&2
     exit 1
     ;;
 esac
