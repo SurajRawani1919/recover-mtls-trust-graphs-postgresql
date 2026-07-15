@@ -11,13 +11,13 @@ Agents build a C++ recovery pipeline that repairs corrupted GraphML mTLS trust g
 - `instruction.md` — agent prompt
 - `task.toml` — harness metadata
 - `environment/Dockerfile` — container image
-- `app/` — task environment (fixtures, API, DB schema, pipeline stubs)
+- `environment/app/` — task environment (fixtures, API, DB schema, pipeline stubs)
 - `solution/` — oracle (`solve.sh` + reference C++ pipeline)
 - `tests/` — verifier (`test.sh`, `test_outputs.py`)
 
 ## Local notes
 
-The Docker image generates deterministic cryptographic fixtures at build time via `app/scripts/gen_fixtures.py`.
+The Docker image generates deterministic cryptographic fixtures at build time via `environment/app/scripts/gen_fixtures.py`.
 
 The oracle copies `solution/pipeline/` into `/app/pipeline/`, builds `recover_graph`, starts PostgreSQL and the verifier API, and runs the full pipeline.
 

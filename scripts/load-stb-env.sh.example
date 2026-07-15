@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Copy to scripts/load-stb-env.sh and set your Snorkel API key.
+# Do NOT commit load-stb-env.sh (gitignored).
+
+export SNORKEL_API_KEY="snorkel_YOUR_KEY_HERE"
+export PATH="$HOME/.local/bin:$PATH"
+
+# AI keys for agent runs — refresh each session (do not hardcode; they expire):
+#   stb keys refresh
+#   eval "$(stb keys show | grep '^export')"

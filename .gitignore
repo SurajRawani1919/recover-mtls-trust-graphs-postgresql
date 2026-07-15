@@ -1,0 +1,16 @@
+# Local Snorkel / AI credentials (never commit)
+scripts/load-stb-env.sh
+
+# Harbor job outputs
+jobs/
+
+# Accidental stb init scaffold
+my-task-name/
+
+# Build artifacts
+environment/app/pipeline/build/
+environment/app/bin/
+
+# Runtime outputs
+environment/app/output/*
+!environment/app/output/.gitkeep
