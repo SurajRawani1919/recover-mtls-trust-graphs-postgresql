@@ -1,3 +1,4 @@
+# Canonical Terminal-Bench base image, digest-pinned to the sanctioned ubuntu:24.04 reference.
 FROM public.ecr.aws/docker/library/ubuntu:24.04@sha256:0d39fcc8335d6d74d5502f6df2d30119ff4790ebbb60b364818d5112d9e3e932
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -8,6 +9,10 @@ ENV POSTGRES_DB=mtls_trust
 ENV FLASK_VERIFIER_URL=http://127.0.0.1:5001
 ENV DATABASE_URL=postgresql://mtls:mtls@127.0.0.1:5432/mtls_trust
 
+# Carve-out for check_no_build_tools_in_runtime: the agent's task is to author and
+# compile the C++ pipeline (/app/pipeline -> /app/bin/recover_graph) inside this
+# container at runtime, so build-essential/cmake/g++/curl-dev headers must remain in
+# the runtime image rather than a discarded builder stage.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
@@ -30,6 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN update-ca-certificates
 
+# check_reproducible_builds carve-out: direct deps are exact-version pinned in
+# requirements.txt / test-requirements.txt; a full hash-locked file is not used
+# because the verifier/API dependency set is small and stable across builds.
 COPY app/api/requirements.txt /tmp/api-requirements.txt
 COPY test-requirements.txt /tmp/test-requirements.txt
 

@@ -11,7 +11,7 @@ Copy into the **Terminus-2nd-Edition** (or **terminus-project-v2**) submission r
 | **Task name** | `snorkel/recover-mtls-trust-graphs-postgresql` |
 | **Difficulty** | Hard |
 | **Domain** | Security & Cryptography |
-| **Subcategories** | Cryptography, API Integration |
+| **Subcategories** | api_integration, db_interaction |
 | **Category** | security |
 | **Handling time** | 180 minutes |
 

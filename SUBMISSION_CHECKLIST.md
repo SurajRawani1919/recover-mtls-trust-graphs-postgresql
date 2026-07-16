@@ -1,8 +1,8 @@
 # Pre-Submission Checklist — recover-mtls-trust-graphs-postgresql
 
-**Official reference:** [Snorkel Submission Checklist](https://snorkel-ai.github.io/Terminus-EC-Training-stateful/portal/docs/submitting-tasks/submission-checklist)
+**Official reference:** Snorkel Task Requirements & Submission Checklist (Terminus EC Training portal, login-gated — full text pasted into this project's chat history on 2026-07-16).
 
-Status as of **2026-07-15**. Use before every upload.
+Status as of **2026-07-16**. Use before every upload.
 
 ---
 
@@ -42,7 +42,8 @@ Status as of **2026-07-15**. Use before every upload.
 | Item | Status |
 |------|--------|
 | Rubric drafted and aligned to task | ✅ See `RUBRIC.md` |
-| ≥3 negative-reward criteria (-1) | ✅ N1–N4 in `RUBRIC.md` |
+| ≥3 negative-reward criteria | ✅ N1–N4, all `-1` |
+| Negative values are -1/-2/-3/-5 (never -4) | ✅ All `-1` |
 | Paste into Experts platform UI after upload | ⏳ Manual step |
 
 ### Quality Standards
@@ -125,12 +126,14 @@ stb harbor run -m @anthropic/claude-opus-4-8 -p .
 
 ### Difficulty Calculation
 
+Official guidance: accuracy is measured out of **5 attempts** per frontier model (minimum 2–3 acceptable for local iteration).
+
 | Metric | Value |
 |--------|-------|
 | Worst-model pass rate | **100%** (1/1) |
 | Best-model pass rate | **100%** (1/1) |
 | Declared difficulty | **Hard** |
-| **Verdict** | ❌ Hard requires ≤80% worst-model pass rate — run 2–3 more trials or change to Medium |
+| **Verdict** | ❌ Hard requires ≤20% accuracy on best OR worst model; task must score <80% on worst model to be accepted at all. Run 3–4 more trials per model, or change difficulty to Medium/Easy |
 
 ---
 

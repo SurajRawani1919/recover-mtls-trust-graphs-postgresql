@@ -1,3 +1,7 @@
+"""Verify the mTLS trust-graph recovery pipeline output: repaired GraphML,
+report.json schema/content, and the PostgreSQL services/trust_edges tables.
+"""
+
 import json
 import os
 from pathlib import Path
