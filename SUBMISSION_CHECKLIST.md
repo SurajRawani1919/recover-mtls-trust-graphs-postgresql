@@ -83,7 +83,7 @@ stb harbor run -a oracle -p .
 | `tests/test.sh` — `-rA`, reward block, no pip | ✅ |
 | Dockerfile digest-pinned | ✅ |
 | `.dockerignore` required exclusions | ✅ |
-| Category classifier (security, not data-processing) | ⚠️ Confirm on re-upload |
+| Category classifier (security, not data-processing) | ❌→✅ Fixed 2026-07-16: CodeBuild run flagged `Predicted category 'data-processing' (confidence 0.9) is blocked`. Cause: de-hinting instruction.md (removing the named answer) stripped most of the security framing, leaving mostly ETL-flavored verbs (merge/deduplicate/persist/report). Rewrote instruction.md with an explicit threat-model paragraph and reframed every section around verification/enforcement rather than data movement, without reintroducing the removed answer. |
 | Dockerfile warnings (multi-stage, lockfile) | ⚠️ Acceptable carve-out — agent compiles C++ at runtime |
 | Test-only deps (pytest, psycopg2-binary, lxml) not in agent-visible runtime | ✅ Fixed 2026-07-16 — moved to isolated `/opt/test-venv`, not on system `python3`/`pip3` |
 | `tmux` + `asciinema` installed | ✅ Added 2026-07-16 (defensive; not required by any observed Edition-2 CodeBuild log so far) |
