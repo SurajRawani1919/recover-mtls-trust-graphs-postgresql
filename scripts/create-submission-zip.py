@@ -28,6 +28,7 @@ INCLUDE_FILES = [
     "README.md",
     "PROJECT_PLAN.md",
     "RUBRIC.md",
+    "SUBMISSION_CHECKLIST.md",
     "EXPERTS_PLATFORM.md",
 ]
 

@@ -1,6 +1,6 @@
 # Recover mTLS Trust Graphs: Cryptographic Trust Policy Recovery
 
-Security operations exported an **mTLS service-trust authorization graph** as GraphML. The archive is **cryptographically corrupted** and must not be used for access-control decisions until you implement a **fail-closed C++ recovery pipeline** that repairs the graph, validates **Ed25519** edge signatures, checks **certificate revocation**, verifies trust material through the bundled Flask API, and persists **only cryptographically verified** service trust relationships to PostgreSQL via **`libpq` `COPY`**.
+This is a **Security & Cryptography** task. Security operations exported an **mTLS service-trust authorization graph** as GraphML. The archive is **cryptographically corrupted** and must not be used for access-control decisions until you implement a **fail-closed C++ recovery pipeline** that repairs the graph, validates **Ed25519** edge signatures, checks **X.509 certificate revocation**, verifies trust material through the bundled Flask PKI verifier API, and only then persists authorized trust relationships.
 
 ## Environment
 
@@ -36,7 +36,7 @@ Edge canonical signed payload (UTF-8, no trailing newline): `{source_service_id}
 
 ## Pipeline requirements
 
-Implement `/app/bin/recover_graph` from `/app/pipeline/`. The pipeline must merge and repair the graph; write `/app/output/repaired.graphml`; fetch and pass XSD validation; for each node call `/verify/key` and `/verify/revocation` (only non-revoked nodes with valid keys are verified); for each edge call `/verify/edge` (ingest only when signature is valid and both endpoints are verified nodes); bulk-load verified rows with **`PQexec` + `COPY ... FROM STDIN`** into `services(service_id, label, cert_serial, issuer_key_id)` and `trust_edges(edge_id, source_service_id, target_service_id, policy, signature)`; write `/app/output/report.json` conforming to `/app/schema/report.schema.json`.
+Implement `/app/bin/recover_graph` from `/app/pipeline/`. The pipeline must merge and repair the graph; write `/app/output/repaired.graphml`; fetch and pass XSD validation; for each node call `/verify/key` and `/verify/revocation` (only non-revoked nodes with valid keys are verified); for each edge call `/verify/edge` (ingest only when signature is valid and both endpoints are verified nodes); persist every verified record — and no unverified record — into the `services(service_id, label, cert_serial, issuer_key_id)` and `trust_edges(edge_id, source_service_id, target_service_id, policy, signature)` tables using `libpq`; write `/app/output/report.json` conforming to `/app/schema/report.schema.json`.
 
 Report `status` is `"success"` when XSD passed and at least one verified node loaded without hard failure; `"partial"` when XSD passed but verification rejected some records; `"failed"` when repair or XSD failed. List repair actions (`merge_fragments`, `inject_keys`, `deduplicate_nodes`, `reattach_signatures`) when applicable. Use **C++17**, do not vendor the XSD, do not insert unverified records, exit **0** on `success`/`partial` and non-zero on `failed`.
 

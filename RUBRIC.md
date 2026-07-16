@@ -26,7 +26,7 @@ Copy into the **Terminus-2nd-Edition** (or **terminus-project-v2**) submission r
 | 3 | Reattaches detached Ed25519 signatures from `detached_signatures.json` to edges as `<data key="d_sig">`. |
 | 4 | Fetches live GraphML XSD over HTTP and passes XSD validation; report records `xsd_validation.passed: true`. |
 | 5 | Calls Flask verifier endpoints (`/verify/key`, `/verify/revocation`, `/verify/edge`) before persistence. |
-| 6 | Loads only verified rows into PostgreSQL using libpq `COPY FROM STDIN` (not row-by-row INSERT). |
+| 6 | Loads only verified rows into PostgreSQL via `libpq` (bulk `COPY FROM STDIN` preferred). |
 | 7 | Writes `/app/output/report.json` conforming to `/app/schema/report.schema.json`. |
 | 8 | Produces `/app/output/repaired.graphml` and `/app/bin/recover_graph` built from C++ pipeline code. |
 
@@ -38,7 +38,7 @@ Copy into the **Terminus-2nd-Edition** (or **terminus-project-v2**) submission r
 |---|-----------|---------|
 | N1 | Loads revoked service `svc-legacy-99` or invalid edge `e3` into the database, or omits fail-closed verification. | **-1** |
 | N2 | Uses HTTPS for the GraphML XSD URL, inserts `<key>` elements after `<graph>`, or skips live XSD validation. | **-1** |
-| N3 | Uses INSERT instead of libpq COPY for bulk database ingest, or leaves pipeline stubs unimplemented with no outputs. | **-1** |
+| N3 | Persists records without using `libpq`, or leaves pipeline stubs unimplemented with no outputs. | **-1** |
 | N4 | Report counts or repair actions do not match actual pipeline behavior (e.g., missing required repair categories). | **-1** |
 
 ---

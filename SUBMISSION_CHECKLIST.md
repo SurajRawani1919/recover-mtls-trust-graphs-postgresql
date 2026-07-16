@@ -1,82 +1,136 @@
 # Pre-Submission Checklist — recover-mtls-trust-graphs-postgresql
 
+**Official reference:** [Snorkel Submission Checklist](https://snorkel-ai.github.io/Terminus-EC-Training-stateful/portal/docs/submitting-tasks/submission-checklist)
+
 Status as of **2026-07-15**. Use before every upload.
 
 ---
 
-## Task Design
+## Pre-Submission Verification
+
+### Task Design
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Problem statement clear | ✅ | Security-focused `instruction.md` |
-| Requirements explicit | ✅ | Pipeline steps, API table, absolute `/app/` paths |
-| Absolute paths used | ✅ | `/app/output/repaired.graphml`, `/app/bin/recover_graph`, etc. |
-| Output files named | ✅ | `repaired.graphml`, `report.json` |
-| Data schemas specified | ✅ | `report.schema.json`, GraphML key table |
-| Difficulty target < 80% pass | ❌ | **Both agents passed 100% on run 1 — recalibrate before Hard approval** |
+| Problem statement is clear and unambiguous | ✅ | Security-focused `instruction.md` |
+| All requirements are explicitly stated | ✅ | Pipeline steps, API table, absolute `/app/` paths |
+| Uses absolute paths (e.g., `/app/file.txt`) | ✅ | `/app/output/repaired.graphml`, `/app/bin/recover_graph`, etc. |
+| Output files are named in instructions | ✅ | `repaired.graphml`, `report.json` |
+| Data schemas are fully specified | ✅ | `report.schema.json`, GraphML key table |
+| Difficulty target: < 80% pass rate | ❌ | **Both agents passed 100% on run 1 — recalibrate before Hard approval** |
 
----
+### Required Files
 
-## Required Files (non-milestone, `number_of_milestones = 0`)
+**Always required:**
 
 | File | Status |
 |------|--------|
-| `task.toml` | ✅ All Edition 2 metadata fields |
-| `environment/Dockerfile` | ✅ Digest-pinned base, pinned deps, test deps preinstalled |
+| `task.toml` — complete configuration with all required sections | ✅ All Edition 2 metadata fields |
+| `environment/Dockerfile` — digest-pinned base, pinned deps, builds successfully | ✅ |
+
+**Non-milestone (`number_of_milestones = 0`):**
+
+| File | Status |
+|------|--------|
 | `instruction.md` | ✅ |
-| `solution/solve.sh` | ✅ Deterministic oracle wrapper |
-| `tests/test.sh` | ✅ `pytest -rA`, reward block, no pip in tests |
-| `tests/test_outputs.py` | ✅ 8 tests with docstrings |
+| `solution/solve.sh` — deterministic oracle wrapper | ✅ |
+| `tests/test.sh` — pytest with pre-installed deps + reward file | ✅ `pytest -rA`, `rc=$?` block, no pip |
+| `tests/test_outputs.py` — pytest with docstrings | ✅ 8 tests with docstrings |
 
----
-
-## Rubric
+### Rubric
 
 | Item | Status |
 |------|--------|
-| Rubric drafted | ✅ See `RUBRIC.md` |
-| ≥3 negative criteria (-1) | ✅ N1–N4 in `RUBRIC.md` |
-| Paste into Experts platform UI | ⏳ Manual step after upload |
+| Rubric drafted and aligned to task | ✅ See `RUBRIC.md` |
+| ≥3 negative-reward criteria (-1) | ✅ N1–N4 in `RUBRIC.md` |
+| Paste into Experts platform UI after upload | ⏳ Manual step |
 
----
-
-## Quality Standards
+### Quality Standards
 
 | Item | Status |
 |------|--------|
-| Requirements have tests | ✅ |
-| Tests verify behavior (outputs, DB, schema) | ✅ |
-| Python pytest | ✅ |
-| Anti-cheating (no answers in image) | ✅ solution/tests not in Docker context |
-| Tests check behavior not implementation | ✅ |
-| Test docstrings | ✅ Added |
+| All requirements have corresponding tests | ✅ |
+| Tests verify described requirements (explicit + implicit) | ✅ outputs, DB, schema |
+| Tests written in Python and run with pytest | ✅ |
+| Anti-cheating measures (no hints or exposed answers) | ✅ solution/tests not in Docker context |
+| Tests check behavior, not implementation | ✅ |
+| Complies with Quality Guidelines | ✅ |
 
 ---
 
 ## Automated Checks
 
+### Oracle Agent
+
+```bash
+stb harbor run -a oracle -p .
+```
+
 | Check | Status |
 |-------|--------|
-| Oracle `stb harbor run -a oracle` | ✅ Mean 1.000 |
-| ZIP flat layout (`task.toml` at root) | ✅ Use `scripts/create-submission-zip.py` |
-| `validate-submission-zip.py` | ✅ Local pre-check |
-| CI static checks (metadata, test.sh, digest) | ✅ Fixed in latest zip |
-| Category classifier | ⚠️ Reworked for security; confirm on re-upload |
-| Dockerfile warnings (multi-stage, lockfile) | ⚠️ Acceptable carve-out: agent must compile C++ at runtime |
+| Oracle agent PASSES | ✅ Mean **1.000** |
+
+### CI Checks (run on upload)
+
+| Check | Status |
+|-------|--------|
+| Flat ZIP layout (`task.toml` at root, not nested folder) | ✅ |
+| `validate-submission-zip.py` local pre-check | ✅ PASSED (42.1 KB) |
+| `task.toml` metadata fields | ✅ Fixed |
+| Agent timeout ≤ 1800 | ✅ |
+| `tests/test.sh` — `-rA`, reward block, no pip | ✅ |
+| Dockerfile digest-pinned | ✅ |
+| `.dockerignore` required exclusions | ✅ |
+| Category classifier (security, not data-processing) | ⚠️ Confirm on re-upload |
+| Dockerfile warnings (multi-stage, lockfile) | ⚠️ Acceptable carve-out — agent compiles C++ at runtime |
+
+### LLMaJ Checks
+
+| Check | Status |
+|-------|--------|
+| behavior_in_task_description | ✅ |
+| behavior_in_tests | ✅ |
+| informative_test_docstrings | ✅ |
+| anti_cheating_measures | ✅ |
+| structured_data_schema | ✅ |
+| file_reference_mentioned | ✅ |
 
 ---
 
 ## Real Agent Testing
 
-| Model | Run 1 | Run 2 | Run 3 |
-|-------|-------|-------|-------|
-| GPT-5.5 | **PASS (1.0)** | ⏳ | ⏳ |
-| Claude Opus 4.8 | **PASS (1.0)** | ⏳ | ⏳ |
+Run against GPT-5.5:
 
-**Worst-model pass rate:** 100% (1/1)  
-**Best-model pass rate:** 100% (1/1)  
-**Declared difficulty:** Hard  
-**Recommendation:** Run 2 more trials each; if still >80%, increase difficulty or change to Medium.
+```bash
+stb harbor run -m @openai/gpt-5.5 -p .
+```
+
+| Run | Result |
+|-----|--------|
+| Run 1 | **PASS (1.0)** |
+| Run 2 | ⏳ |
+| Run 3 | ⏳ |
+
+Run against Claude Opus 4.8:
+
+```bash
+stb harbor run -m @anthropic/claude-opus-4-8 -p .
+```
+
+| Run | Result |
+|-----|--------|
+| Run 1 | **PASS (1.0)** |
+| Run 2 | ⏳ |
+| Run 3 | ⏳ |
+
+### Difficulty Calculation
+
+| Metric | Value |
+|--------|-------|
+| Worst-model pass rate | **100%** (1/1) |
+| Best-model pass rate | **100%** (1/1) |
+| Declared difficulty | **Hard** |
+| **Verdict** | ❌ Hard requires ≤80% worst-model pass rate — run 2–3 more trials or change to Medium |
 
 ---
 
@@ -84,9 +138,10 @@ Status as of **2026-07-15**. Use before every upload.
 
 | Step | Status |
 |------|--------|
-| Create flat ZIP (not nested folder) | ✅ `recover-mtls-trust-graphs-postgresql-submission.zip` on Desktop |
-| Upload to Experts platform | ⏳ |
-| Project access / enrollment | ❌ Confirm `stb projects list` shows your project |
+| Created ZIP of files (not folder) | ✅ `recover-mtls-trust-graphs-postgresql-submission.zip` on Desktop |
+| All required files included in ZIP | ✅ |
+| Upload to **terminus-project-v2** on Snorkel Expert Platform | ⏳ |
+| Project access / enrollment (`stb projects list`) | ❌ Confirm enrollment |
 | Metadata filled in platform UI | ⏳ |
 | Rubric pasted from `RUBRIC.md` | ⏳ |
 
