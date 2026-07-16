@@ -60,6 +60,11 @@ TEST_FUNCTIONS = [
     "test_services_table",
     "test_trust_edges_table",
     "test_edge_signature_reattached",
+    "test_binary_is_compiled_elf",
+    "test_verifier_api_was_called",
+    "test_graphml_keys_declared_before_graph",
+    "test_graphml_nodes_deduplicated",
+    "test_graphml_passes_independent_xsd_validation",
 ]
 
 
@@ -138,12 +143,18 @@ def main() -> int:
             errors.append("test.sh still runs pip install")
         if not sh.rstrip().endswith("fi"):
             errors.append("test.sh must end with reward if/fi block")
+        if "/opt/test-venv/bin/python3 -m pytest" not in sh:
+            errors.append("test.sh must invoke pytest via the isolated /opt/test-venv")
 
         dockerfile = zf.read("environment/Dockerfile").decode()
         if "@sha256:" not in dockerfile:
             errors.append("Dockerfile not digest-pinned")
         if "COPY app/" in dockerfile and "COPY app/api/requirements.txt" not in dockerfile:
             errors.append("Dockerfile should copy requirements before app/ for layer caching")
+        if "/opt/test-venv" not in dockerfile:
+            errors.append("Dockerfile must install test-only deps into an isolated /opt/test-venv")
+        if "tmux" not in dockerfile or "asciinema" not in dockerfile:
+            errors.append("Dockerfile missing tmux/asciinema packages")
         first_from = next(
             (line for line in dockerfile.splitlines() if line.strip().startswith("FROM")), ""
         )

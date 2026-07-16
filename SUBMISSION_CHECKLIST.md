@@ -17,7 +17,8 @@ Status as of **2026-07-16**. Use before every upload.
 | Uses absolute paths (e.g., `/app/file.txt`) | ✅ | `/app/output/repaired.graphml`, `/app/bin/recover_graph`, etc. |
 | Output files are named in instructions | ✅ | `repaired.graphml`, `report.json` |
 | Data schemas are fully specified | ✅ | `report.schema.json`, GraphML key table |
-| Difficulty target: < 80% pass rate | ❌ | **Both agents passed 100% on run 1 — recalibrate before Hard approval** |
+| Difficulty target: < 80% pass rate | ❌ | Client review (2026-07-16): TRIVIAL (5/5 both terminus-claude-opus-4-6 and terminus-gpt5-2). Fixed the biggest known cause — instruction.md named the exact expected answer (services/edges) and used real fixture values in API examples; both replaced with rule-based/generic text. Re-run agents to confirm improvement. |
+| Instruction does not give Answers/Hints | ✅ (fixed 2026-07-16) | Removed "Expected verified outcome" section that named literal service/edge IDs; genericized API example payloads |
 
 ### Required Files
 
@@ -34,16 +35,16 @@ Status as of **2026-07-16**. Use before every upload.
 |------|--------|
 | `instruction.md` | ✅ |
 | `solution/solve.sh` — deterministic oracle wrapper | ✅ |
-| `tests/test.sh` — pytest with pre-installed deps + reward file | ✅ `pytest -rA`, `rc=$?` block, no pip |
-| `tests/test_outputs.py` — pytest with docstrings | ✅ 8 tests with docstrings |
+| `tests/test.sh` — pytest with pre-installed deps + reward file | ✅ `pytest -rA` via isolated `/opt/test-venv`, `rc=$?` block, no pip |
+| `tests/test_outputs.py` — pytest with docstrings | ✅ 13 tests with docstrings (5 added 2026-07-16 for anti-cheating) |
 
 ### Rubric
 
 | Item | Status |
 |------|--------|
-| Rubric drafted and aligned to task | ✅ See `RUBRIC.md` |
-| ≥3 negative-reward criteria | ✅ N1–N4, all `-1` |
-| Negative values are -1/-2/-3/-5 (never -4) | ✅ All `-1` |
+| Rubric drafted and aligned to task | ✅ See `RUBRIC.md` — replaced with client's point-weighted rubric (2026-07-16) |
+| ≥3 negative-reward criteria | ✅ N1–N5 |
+| Negative values are -1/-2/-3/-5 (never -4) | ✅ -5, -2, -3, -5, -2 |
 | Paste into Experts platform UI after upload | ⏳ Manual step |
 
 ### Quality Standards
@@ -84,6 +85,10 @@ stb harbor run -a oracle -p .
 | `.dockerignore` required exclusions | ✅ |
 | Category classifier (security, not data-processing) | ⚠️ Confirm on re-upload |
 | Dockerfile warnings (multi-stage, lockfile) | ⚠️ Acceptable carve-out — agent compiles C++ at runtime |
+| Test-only deps (pytest, psycopg2-binary, lxml) not in agent-visible runtime | ✅ Fixed 2026-07-16 — moved to isolated `/opt/test-venv`, not on system `python3`/`pip3` |
+| `tmux` + `asciinema` installed | ✅ Added 2026-07-16 (defensive; not required by any observed Edition-2 CodeBuild log so far) |
+
+**Note on 2026-07-16 client review report:** a "REVIEW REPORT" section in that feedback flagged `task.toml` missing `version = "2.0"` and a "non-canonical base image" warning, citing generic Terminal-Bench (t-bench) conventions (`ghcr.io/laude-institute/t-bench/*` base images). Our actual Snorkel Edition-2 CodeBuild runs have explicitly validated `schema_version = "1.3"` with no complaint and confirmed `ubuntu:24.04` (pinned to the canonical `public.ecr.aws/docker/library/` digest) as **sanctioned**. This suggests that section of the review used a template for a different (open-source Terminal-Bench) task format. Added `version = "2.0"` as a harmless alias field in `task.toml` anyway; did not change the base image given the real CI's explicit sanction.
 
 ### LLMaJ Checks
 
@@ -92,9 +97,10 @@ stb harbor run -a oracle -p .
 | behavior_in_task_description | ✅ |
 | behavior_in_tests | ✅ |
 | informative_test_docstrings | ✅ |
-| anti_cheating_measures | ✅ |
+| anti_cheating_measures | ✅ Strengthened 2026-07-16: verifier-API-call-count test, ELF-binary test, structural GraphML checks, independent XSD re-validation, isolated test-venv, de-hinted instruction.md |
 | structured_data_schema | ✅ |
 | file_reference_mentioned | ✅ |
+| test_deps_in_image (flagged ❌ in 2026-07-16 review) | ✅ Fixed — pytest/psycopg2-binary/jsonschema/lxml now installed into `/opt/test-venv`, invisible to the agent's default `python3` |
 
 ---
 

@@ -1,4 +1,6 @@
 schema_version = "1.3"
+# Alias for reviewer tooling that expects a top-level "version" key.
+version = "2.0"
 
 [task]
 name = "snorkel/recover-mtls-trust-graphs-postgresql"

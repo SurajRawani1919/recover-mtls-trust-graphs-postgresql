@@ -28,9 +28,9 @@ Start services with `/app/scripts/start_services.sh`, then call these JSON endpo
 | Endpoint | Method | Request | Response |
 |----------|--------|---------|----------|
 | `/health` | GET | — | `{"status":"ok"}` |
-| `/verify/key` | POST | `{"cert_serial":"AUTH-0001"}` | `{"valid":true,"issuer_key_id":"platform-issuer-v1"}` or `"valid":false` |
-| `/verify/revocation` | POST | `{"cert_serial":"LEGACY-0099"}` | `{"revoked":true}` or `{"revoked":false}` |
-| `/verify/edge` | POST | `{"source":"svc-auth-01","target":"svc-pay-02","policy":"allow:read","signature":"<base64>"}` | `{"valid":true}` or `{"valid":false}` |
+| `/verify/key` | POST | `{"cert_serial":"<serial>"}` | `{"valid":true,"issuer_key_id":"<id>"}` or `{"valid":false}` |
+| `/verify/revocation` | POST | `{"cert_serial":"<serial>"}` | `{"revoked":true}` or `{"revoked":false}` |
+| `/verify/edge` | POST | `{"source":"<service_id>","target":"<service_id>","policy":"<policy>","signature":"<base64>"}` | `{"valid":true}` or `{"valid":false}` |
 
 Edge canonical signed payload (UTF-8, no trailing newline): `{source_service_id}|{target_service_id}|{policy}`.
 
@@ -54,6 +54,6 @@ Report `status` is `"success"` when XSD passed and at least one verified node lo
   --database-url postgresql://mtls:mtls@127.0.0.1:5432/mtls_trust
 ```
 
-## Expected verified outcome
+## Expected behavior
 
-A correct run loads **3** services (`svc-auth-01`, `svc-pay-02`, `svc-notify-03`) and **3** edges (`e1`, `e2`, `e4`). `svc-legacy-99` and edge `e3` must be rejected and absent from the database.
+A correct run persists into PostgreSQL only the services that have a valid issuer key and are not revoked, and only the edges whose Ed25519 signature verifies and whose source and target are both persisted services. Any node or edge failing a check must be absent from the database and reported in `verification.rejected_nodes` / `verification.rejected_edges`.
