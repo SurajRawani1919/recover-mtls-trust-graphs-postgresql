@@ -4,7 +4,7 @@ version = "2.0"
 
 [task]
 name = "snorkel/recover-mtls-trust-graphs-postgresql"
-description = "Implement a fail-closed C++ mTLS security pipeline: repair a corrupted service authorization graph, verify Ed25519 trust-edge signatures and X.509 certificate revocation through a Flask PKI verifier API, and persist only cryptographically authorized trust relationships."
+description = "Implement a fail-closed C++ access-control enforcement binary that reconstructs a corrupted mTLS service-trust graph and admits only cryptographically authorized trust relationships — verified via Ed25519 signature checks and X.509 certificate revocation lookups against a PKI verifier — into the production trust store."
 authors = [{ name = "Suraj Rawani", email = "SurajRawani1919@users.noreply.github.com" }]
 keywords = [
   "mtls",
@@ -26,8 +26,8 @@ difficulty = "hard"
 difficulty_explanation = "Requires C++ cryptographic graph repair, Ed25519 signature verification, certificate revocation checks, live XSD validation, and fail-closed API-gated persistence."
 category = "security"
 domain = "Security & Cryptography"
-subcategories = ["api_integration", "db_interaction"]
-tags = ["mtls", "ed25519", "flask", "postgresql", "libxml2", "docker"]
+subcategories = ["api_integration", "tool_specific"]
+tags = ["mtls", "ed25519", "x509", "pki", "certificate-revocation", "access-control"]
 codebase_size = "small"
 number_of_milestones = 0
 languages = ["cpp", "python", "sql"]
