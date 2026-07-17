@@ -2,7 +2,7 @@
 
 **Official reference:** Snorkel Task Requirements & Submission Checklist (Terminus EC Training portal, login-gated — full text pasted into this project's chat history on 2026-07-16).
 
-Status as of **2026-07-16**. Use before every upload.
+Status as of **2026-07-17**. Use before every upload.
 
 ---
 
@@ -77,7 +77,7 @@ stb harbor run -a oracle -p .
 | Check | Status |
 |-------|--------|
 | Flat ZIP layout (`task.toml` at root, not nested folder) | ✅ |
-| `validate-submission-zip.py` local pre-check | ✅ PASSED (42.1 KB) |
+| `validate-submission-zip.py` local pre-check | ✅ PASSED (~46.5 KB — size grows slightly each fix; regenerate before every upload, don't trust a cached number) |
 | `task.toml` metadata fields | ✅ Fixed |
 | Agent timeout ≤ 1800 | ✅ |
 | `tests/test.sh` — `-rA`, reward block, no pip | ✅ |
@@ -149,10 +149,10 @@ Official guidance: accuracy is measured out of **5 attempts** per frontier model
 |------|--------|
 | Created ZIP of files (not folder) | ✅ `recover-mtls-trust-graphs-postgresql-submission.zip` on Desktop |
 | All required files included in ZIP | ✅ |
-| Upload to **terminus-project-v2** on Snorkel Expert Platform | ⏳ |
-| Project access / enrollment (`stb projects list`) | ❌ Confirm enrollment |
-| Metadata filled in platform UI | ⏳ |
-| Rubric pasted from `RUBRIC.md` | ⏳ |
+| Upload to **terminus-project-v2** on Snorkel Expert Platform | 🔁 Uploaded 3+ times so far (2026-07-16/17), each time hitting a real CodeBuild run — platform access is confirmed working, not a blocker |
+| Project access / enrollment (`stb projects list`) | ✅ Confirmed — real CodeBuild logs are being returned on each upload |
+| Metadata filled in platform UI | ⏳ Confirm on next upload |
+| Rubric pasted from `RUBRIC.md` | ⏳ Paste current N1–N5 version (5 negatives, not the older N1–N4) |
 
 ---
 
@@ -173,6 +173,9 @@ python3 scripts/validate-submission-zip.py ~/Desktop/recover-mtls-trust-graphs-p
 
 ## Blockers before final approval
 
-1. **Difficulty calibration** — Hard tasks require ≤80% worst-model pass rate; currently 100%.
-2. **Platform project access** — `stb submissions create` needs Terminus project enrollment.
-3. **Rubric UI** — Paste `RUBRIC.md` criteria (including N1–N4 negatives) on Experts platform.
+Ordered by what's actually stopping the build right now, not by discovery order:
+
+1. **`category_classifier` predicts 'data-processing' (blocked category)** — the *current* hard blocker as of the 2026-07-17 CodeBuild log. Two rounds of instruction/tag rewording have dropped confidence 0.90 → 0.85 but not flipped the verdict yet. Not re-verified against a fresh build. **If a 3rd wording attempt fails, this needs a structural change** (shift graded weight further onto crypto-verification logic, reduce the XML-merge/SQL-load surface area), not more rewording.
+2. **Difficulty calibration** — task.toml declares Hard, but the one real reviewer report we have shows 100% pass (TRIVIAL) for both frontier models tested. The de-hinting fix (removing the named answer from instruction.md) addresses the most obvious cause, but this has **not been re-verified** with fresh agent runs since — no local way to confirm.
+3. **Rubric UI paste** — manually paste the current `RUBRIC.md` (N1–N5, point-weighted) into the Experts platform rubric box; the old N1–N4 all-`-1` version is stale.
+4. ~~Platform project access~~ — no longer a blocker; confirmed working via real CodeBuild runs.
